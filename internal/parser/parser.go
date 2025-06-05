@@ -64,21 +64,6 @@ func GetData(filter string) (interface{}, error) {
 	if err != nil {
 		return nil, &ParseError{"Error parsing", err}
 	}
-
-	if _, err := strconv.Atoi(filter); err == nil {
-		year := filter
-		v, ok := data[year]
-		if !ok {
-			return nil, fmt.Errorf("нет данных за %s год", year)
-		}
-		return v, nil
-	}
-
-	// Если filter — это просто ключ (месяц или год)
-	if val, ok := data[filter]; ok {
-		return val, nil
-	}
-
 	// Если filter — это пара "год месяц"
 	fs := strings.Split(filter, " ")
 	if len(fs) == 2 {
@@ -92,9 +77,28 @@ func GetData(filter string) (interface{}, error) {
 			return nil, fmt.Errorf("неожиданный формат данных за %s год", year)
 		}
 		if val, ok := res[month]; ok {
-			return val, nil
+			return map[string]map[string]float64{year: {month: val.(float64)}}, nil
 		}
 		return nil, fmt.Errorf("нет данных за месяц %s в %s году", month, year)
+	}
+
+	_, err = strconv.Atoi(filter)
+	if err == nil {
+		year := filter
+		v, ok := data[year]
+		if !ok {
+			return nil, fmt.Errorf("нет данных за %s год", year)
+		}
+		return v, nil
+	} else if err != nil {
+		year := strconv.Itoa(time.Now().Year())
+		month := filter
+		v, ok := data[year]
+		if !ok {
+			return nil, fmt.Errorf("нет данных за %s год %s ", year, month)
+		}
+		res := v.(map[string]interface{})[month]
+		return map[string]float64{month: res.(float64)}, nil
 	}
 
 	return nil, fmt.Errorf("непонятный формат фильтра: %s", filter)

@@ -6,6 +6,7 @@ import (
 	"index_plov/internal/parser"
 	"log"
 	"os"
+	"strconv"
 	"strings"
 	"time"
 
@@ -52,13 +53,19 @@ func main() {
 		}
 
 		switch v := result.(type) {
+		case map[string]map[string]float64:
+			fs := strings.Split(message, " ")
+			rm.WriteString(fs[0] + "\n")
+			fmt.Fprintf(&rm, "%s : %8.0f сум\n", fs[1], v[fs[0]][fs[1]])
+		case map[string]float64:
+			now := strconv.Itoa(time.Now().Year())
+			rm.WriteString(now + "\n")
+			fmt.Fprintf(&rm, "%s : %8.0f сум\n", message, v[message])
 		case map[string]interface{}:
 			rm.WriteString(message + "\n")
 			for key, value := range v {
-				fmt.Fprintf(&rm, "\t%s : %f\n", key, value)
+				fmt.Fprintf(&rm, "%s : %8.0f сум\n", key, value)
 			}
-		case float64:
-			fmt.Fprintf(&rm, "%s : %f", time.Now().Month().String(), v)
 		default:
 			rm.WriteString("Нет информации об этом месяце")
 		}
